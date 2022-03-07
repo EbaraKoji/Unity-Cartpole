@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Text;
 using UnityEngine;
+using Newtonsoft.Json;
 
 public class PythonCommunicator : MonoBehaviour
 {
@@ -18,12 +19,15 @@ public class PythonCommunicator : MonoBehaviour
     NetworkStream nwStream;
     bool running = false;
 
-    SendType sendType;
-
-    ReceiveType receiveType;
     object receiveData;
 
-    string sendMessage;
+    struct SendSample
+    {
+        public float[][] env;
+        public float reward;
+        public bool done;
+        public object info;
+    }
 
     void Start()
     {
@@ -37,10 +41,17 @@ public class PythonCommunicator : MonoBehaviour
 
     }
 
-    void SendMessage()
+    string StructJsonString()
     {
-        sendMessage = DateTime.Now.ToString();
-        SendData(SendType.String, sendMessage);
+        SendSample sendSample = new SendSample();
+        sendSample.env = new float[][] {
+            new float[] { 0.1f, 0.2f, 0.3f },
+            new float[] { 0.4f, 0.5f, 0.6f },
+        };
+        sendSample.reward = 3.7f;
+        sendSample.done = true;
+        sendSample.info = null;
+        return JsonConvert.SerializeObject(sendSample);
     }
 
     void ConnectPython()
@@ -59,11 +70,11 @@ public class PythonCommunicator : MonoBehaviour
         {
             while (running)
             {
-                receiveData = ReceiveData(receiveType, receiveData);
+                receiveData = ReceiveData();
                 Debug.Log(receiveData);
                 receiveData = null;
 
-                SendMessage();
+                SendData(StructJsonString());
             }
         }
         catch (SocketException sockE)
@@ -78,42 +89,17 @@ public class PythonCommunicator : MonoBehaviour
         }
     }
 
-    void SendData(SendType type, object data)
+    void SendData(object data)
     {
-        if (type == SendType.String)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes((string)data);
-            nwStream.Write(bytes, 0, bytes.Length);
-        }
+        byte[] bytes;
+        bytes = Encoding.UTF8.GetBytes((string)data);
+        nwStream.Write(bytes, 0, bytes.Length);
     }
 
-    object ReceiveData(ReceiveType type, object data)
+    object ReceiveData()
     {
         byte[] buffer = new byte[client.ReceiveBufferSize];
-        if (type == ReceiveType.String)
-        {
-            int bytes = nwStream.Read(buffer, 0, client.ReceiveBufferSize);
-            return Encoding.UTF8.GetString(buffer, 0, bytes);
-        }
-        return null;
-    }
-
-    enum SendType
-    {
-        String,
-        Int,
-        Float,
-        IntArray,
-        FloatArray,
-        FloatNdArray,
-    }
-
-    enum ReceiveType
-    {
-        String,
-        Int,
-        Float,
-        IntArray,
-        FloatArray,
+        int bytes = nwStream.Read(buffer, 0, client.ReceiveBufferSize);
+        return Encoding.UTF8.GetString(buffer, 0, bytes);
     }
 }
