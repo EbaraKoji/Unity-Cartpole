@@ -34,18 +34,15 @@ class Request():
     def __init__(self,
                  req_type: ReqType,
                  timestamp: int,
-                 status_code: int,
                  data: dict):
         self.req_type = req_type.value
         self.timestamp = timestamp
-        self.status_code = status_code
         self.data = data
 
     def to_json(self):
         json_data = {
             "reqType": self.req_type,
             "timestamp": self.timestamp,
-            "statusCode": self.status_code,
             "data": self.data
         }
         return json.dumps(json_data)

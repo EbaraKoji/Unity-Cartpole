@@ -111,7 +111,6 @@ def make_reset_request(s: socket):
     request = Request(
         ReqType.Reset,
         time.time() * 1000,
-        status_code=200,
         data={})
     s.sendall(request.to_json().encode('UTF-8'))
 
@@ -120,7 +119,6 @@ def make_action_request(s: socket, action: int):
     request = Request(
         ReqType.Action,
         time.time() * 1000,
-        status_code=200,
         data=action)
     s.sendall(request.to_json().encode('UTF-8'))
 

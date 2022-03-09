@@ -39,7 +39,6 @@ namespace CartPole.Types
         {
             public int reqType;
             public float timestamp;
-            public int statusCode;
             public object? data;
         }
 
