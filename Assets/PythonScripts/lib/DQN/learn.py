@@ -4,7 +4,7 @@ from collections import deque
 # ToDo: 計算速度を考慮してfloat32をfloat16に変換する。parameterの更新(model.train)直前で行う
 
 # hyper parameters
-GAMMA = 0.95
+GAMMA = 0.99
 BATCH_SIZE = 32
 
 
