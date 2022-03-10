@@ -25,13 +25,6 @@ EPS_DECAY = 0.995
 EPS_MIN = 0.02
 
 
-def recv_data(s: socket):
-    res = s.recv(1024).decode('UTF-8')
-    if len(res) == 0:
-        return
-    return json.loads(res)
-
-
 def main():
     # リアルタイム学習を行う場合は、別スレッドで学習処理ファイルを実行
     epsilon = EPS_START
@@ -43,7 +36,13 @@ def main():
         event = Event()
         replay_buffer = ReplayBuffer()
         running = True
-        t = Thread(target=learn, args=(model, target_model, replay_buffer, running))
+        t = Thread(
+            target=learn,
+            args=(
+                model,
+                target_model,
+                replay_buffer,
+                running))
         t.start()
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -105,6 +104,13 @@ def main():
             event.set()
             running = False
             t.join()
+
+
+def recv_data(s: socket):
+    res = s.recv(1024).decode('UTF-8')
+    if len(res) == 0:
+        return
+    return json.loads(res)
 
 
 def make_reset_request(s: socket):

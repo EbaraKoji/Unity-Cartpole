@@ -34,19 +34,18 @@ namespace CartPole.Types
             Close = 5,
         }
 
-        // null許容が気持ち悪いのでなんとかしたい
         public struct RequestJsonFormat
         {
             public int reqType;
             public float timestamp;
-            public object? data;
+            public object data;
         }
 
         public struct ResponseJsonFormat
         {
             public float timestamp;
             public int statusCode;
-            public object? data;
+            public object data;
         }
 
         public struct Params
