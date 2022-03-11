@@ -11,14 +11,14 @@ class SimpleDQN:
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.lr = lr
-        
+
         self.model = self.create_model()
 
     def create_model(self):
         model = Sequential([
             Input((self.state_dim,)),
+            Dense(64, activation='relu'),
             Dense(32, activation='relu'),
-            Dense(16, activation='relu'),
             Dense(self.action_dim)
         ])
         model.compile(loss='mse', optimizer=Adam(self.lr))

@@ -73,3 +73,7 @@ crashlytics-build.properties
 
 .DS_Store
 __pycache__
+__pycache__.meta
+
+saved
+saved.meta
