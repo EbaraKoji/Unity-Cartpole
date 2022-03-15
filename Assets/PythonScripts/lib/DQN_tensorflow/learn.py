@@ -5,15 +5,16 @@ tf.keras.backend.set_floatx('float32')
 
 # hyper parameters
 GAMMA = 0.99
+MIN_BUFFER_SIZE = 128
 BATCH_SIZE = 32
 
 
 def learn(model, target_model, replay_buffer, shared_vars):
     try:
         while shared_vars.running_sub_thread:
-            if replay_buffer.size() < BATCH_SIZE:
+            if replay_buffer.size() < MIN_BUFFER_SIZE:
                 continue
-            for _ in range(10):
+            for _ in range(BATCH_SIZE):
                 states, actions, rewards, next_states, done = replay_buffer.sample()
                 targets = target_model.predict(states)
                 next_q_values = target_model.predict(next_states).max(axis=1)

@@ -12,7 +12,6 @@ namespace CartPole.API
         [SerializeField] Rigidbody cart;
         [SerializeField] Rigidbody pole;
         [SerializeField] float cartForce = 10f;
-        [SerializeField] float waitAfterAction = 0.01f;
 
         [SerializeField] float xThreshold = 2.4f;
         [SerializeField] float thetaThresholdRadians = 12 * 2 * Mathf.PI / 360;
@@ -37,13 +36,12 @@ namespace CartPole.API
         public DataTypes.Params GetParams()
         {
             DataTypes.Params cartPoleParams = new DataTypes.Params();
-            cartPoleParams.waitAfterAction = waitAfterAction;
             return cartPoleParams;
         }
 
         public void SetParams(DataTypes.Params cartPoleParams)
         {
-            waitAfterAction = cartPoleParams.waitAfterAction;
+            
         }
 
         public DataTypes.Obs Reset()
@@ -59,7 +57,7 @@ namespace CartPole.API
             return GetObs();
         }
 
-        IEnumerator TakeAction(DataTypes.Action action)
+        void TakeAction(DataTypes.Action action)
         {
             Vector3 force = new Vector3(cartForce, 0, 0);
             if (action == DataTypes.Action.Left)
@@ -67,15 +65,13 @@ namespace CartPole.API
                 force *= -1;
             }
             cart.AddForce(force);
-
-            yield return new WaitForSeconds(waitAfterAction);
         }
 
         public DataTypes.ActionResult Action(DataTypes.Action action)
         {
             DataTypes.ActionResult actionResult = new DataTypes.ActionResult();
 
-            StartCoroutine(TakeAction(action));
+            TakeAction(action);
 
             actionResult.obs = GetObs();
             bool done = isCollapsed();

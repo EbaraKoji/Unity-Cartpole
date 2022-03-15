@@ -9,12 +9,10 @@ from importlib import import_module
 import os
 
 import numpy as np
-import tensorflow as tf
-from tensorflow import keras
 
-from lib.DQN.learn import learn
-from lib.DQN.models import SimpleDQN, ReplayBuffer
-from data_types import ReqType, Request
+from lib.DQN_tensorflow.learn import learn
+from lib.DQN_tensorflow.models import SimpleDQN, ReplayBuffer
+from lib.data_types import ReqType, Request
 
 # play_modeを設定したせいで全体的に条件分岐の見通しが悪い、要リファクタリング
 
@@ -40,7 +38,7 @@ CONNECT_INTERVAL = 0.001
 
 STATE_DIM = 4
 ACTION_DIM = 2
-LERNING_RATE = 0.01
+LEARNING_RATE = 0.01
 
 EPS_START = 1.0
 EPS_DECAY = 0.9995
@@ -49,7 +47,7 @@ EPS_MIN = 0.01
 MAX_EPISODE_REWARD = 500
 AVERAGE_REWARD_COUNT = 10
 
-LEARN_LOGIC = 'DQN'
+LEARN_LOGIC = 'DQN_tensorflow'
 SAVE_DIR = f'lib/{LEARN_LOGIC}/saved'
 MODEL_NAME = 'best_model'
 BEST_MODEL_PATH = f'{SAVE_DIR}/{MODEL_NAME}.ckpt'
@@ -70,9 +68,8 @@ def main():
     last_average_reward = None
 
     # load or create model, and load_tmps(if mode is 1)
-    keras.backend.clear_session()
-    model = SimpleDQN(STATE_DIM, ACTION_DIM, LERNING_RATE)
-    target_model = SimpleDQN(STATE_DIM, ACTION_DIM, LERNING_RATE)
+    model = SimpleDQN(STATE_DIM, ACTION_DIM, LEARNING_RATE)
+    target_model = SimpleDQN(STATE_DIM, ACTION_DIM, LEARNING_RATE)
     if args.play_mode == 0:
         model.model.load_weights(BEST_MODEL_PATH)
     elif args.play_mode == 1:
@@ -90,7 +87,8 @@ def main():
                 model,
                 target_model,
                 replay_buffer,
-                shared_vars))
+                shared_vars,))
+                # optimizer)) # noqa E116
         t.start()
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -127,7 +125,8 @@ def main():
                         best_average_reward = last_average_reward
 
                         if args.play_mode != 3 and shared_vars.model_already_updated:
-                            save_model(model)
+                            model.model.save_weights(
+                                BEST_MODEL_PATH, overwrite=True)
 
                 obs = dict_to_nparray(res['data'])
                 done = False
@@ -153,7 +152,7 @@ def main():
                 if episode_reward >= MAX_EPISODE_REWARD:
                     done = True
 
-            if shared_vars.error_in_subthread:
+            if args.play_mode != 0 and shared_vars.error_in_subthread:
                 raise Exception
 
             # CONNECT_INTERVALが0だとUnityのUpdateのフレーム更新前に次のrequestが送られてしまうことがある
@@ -223,22 +222,6 @@ def deal_with_error(res):
         # print(res['message'])
         print(res)
         raise Exception
-
-
-def save_model(model):
-    # custom_modelでは単にmodel.model.save(SAVE_DIR)とするとエラーが出る
-    # feeze graphが必要なためだが、おそらく対処がとても煩雑なのでtensorflow1.x系の
-    # メソッドでグラフを作成しbest_model.pbを保存する
-
-    model.model.save_weights(BEST_MODEL_PATH, overwrite=True)
-    tf.compat.v1.get_default_graph()
-    sess = tf.compat.v1.Session()
-
-    tf.compat.v1.train.write_graph(
-        sess.graph_def,
-        SAVE_DIR,
-        f'{MODEL_NAME}.pb',
-        as_text=False)
 
 
 def load_tmps():
